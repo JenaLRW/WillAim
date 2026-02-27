@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>NASP Archery</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#0d1117;
+  --surface:#161b22;
+  --surface2:#21262d;
+  --border:#30363d;
+  --gold:#f0b429;
+  --gold2:#ffd166;
+  --red:#ef4444;
+  --green:#22c55e;
+  --blue:#60a5fa;
+  --text:#e6edf3;
+  --muted:#8b949e;
+  --accent:#f0b429;
+  --r:14px;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;overflow:hidden;}
+#app{width:100%;height:100%;display:flex;flex-direction:column;max-width:480px;margin:0 auto;position:relative;}
+
+/* ── SCREENS ── */
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden;transition:transform 0.35s cubic-bezier(.77,0,.18,1),opacity 0.35s ease;background:var(--bg);}
+.screen.hidden{transform:translateX(100%);opacity:0;pointer-events:none;}
+.screen.slide-left{transform:translateX(-100%);opacity:0;pointer-events:none;}
+
+/* ── NAV BAR ── */
+.topbar{display:flex;align-items:center;padding:14px 16px 10px;gap:12px;flex-shrink:0;border-bottom:1px solid var(--border);}
+.topbar-back{width:36px;height:36px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+.topbar h2{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1.5px;color:var(--text);flex:1;}
+.topbar-action{padding:6px 14px;border-radius:20px;background:var(--gold);color:#000;font-weight:600;font-size:13px;border:none;cursor:pointer;flex-shrink:0;}
+
+/* ── HOME SCREEN ── */
+.home-header{padding:32px 20px 20px;background:linear-gradient(160deg,#1a2233 0%,var(--bg) 60%);}
+.home-title{font-family:'Bebas Neue',sans-serif;font-size:48px;letter-spacing:3px;line-height:1;color:var(--gold);}
+.home-sub{color:var(--muted);font-size:13px;letter-spacing:1px;margin-top:4px;}
+.home-actions{display:flex;gap:10px;margin-top:20px;}
+.btn-primary{flex:1;padding:14px;border-radius:var(--r);background:var(--gold);color:#000;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1.5px;border:none;cursor:pointer;transition:transform .15s,filter .15s;}
+.btn-primary:active{transform:scale(.97);filter:brightness(.9);}
+.btn-secondary{flex:1;padding:14px;border-radius:var(--r);background:var(--surface2);color:var(--text);font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1.5px;border:1px solid var(--border);cursor:pointer;transition:transform .15s;}
+.btn-secondary:active{transform:scale(.97);}
+.section-label{font-size:11px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;padding:16px 20px 8px;}
+.player-list{overflow-y:auto;flex:1;padding:0 12px 20px;}
+.player-card{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--surface);border-radius:var(--r);margin-bottom:8px;border:1px solid var(--border);cursor:pointer;transition:all .2s;}
+.player-card:active{background:var(--surface2);border-color:var(--gold);}
+.player-avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#d4860a);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:20px;color:#000;flex-shrink:0;}
+.player-info{flex:1;min-width:0;}
+.player-name{font-weight:600;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.player-meta{font-size:12px;color:var(--muted);margin-top:2px;}
+.player-best{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--gold);}
+.empty-state{text-align:center;padding:48px 20px;color:var(--muted);}
+.empty-state .icon{font-size:48px;margin-bottom:12px;}
+.empty-state p{font-size:14px;line-height:1.6;}
+
+/* ── ADD PLAYER ── */
+.form-body{padding:20px;display:flex;flex-direction:column;gap:16px;flex:1;overflow-y:auto;}
+.field label{display:block;font-size:12px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-bottom:6px;}
+.field input,.field select{width:100%;padding:13px 16px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-family:'DM Sans',sans-serif;font-size:16px;outline:none;transition:border-color .2s;}
+.field input:focus,.field select:focus{border-color:var(--gold);}
+.field select option{background:var(--surface2);}
+.avatar-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:6px;}
+.av-opt{width:100%;aspect-ratio:1;border-radius:50%;background:var(--surface2);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;transition:all .2s;}
+.av-opt.selected{border-color:var(--gold);background:rgba(240,180,41,.15);}
+.form-footer{padding:16px 20px;flex-shrink:0;}
+
+/* ── PLAYER PROFILE ── */
+.profile-hero{padding:24px 20px 16px;background:linear-gradient(160deg,#1c2333 0%,var(--bg) 70%);}
+.profile-row{display:flex;align-items:center;gap:16px;margin-bottom:16px;}
+.profile-avatar{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#d4860a);display:flex;align-items:center;justify-content:center;font-size:32px;color:#000;flex-shrink:0;}
+.profile-name{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:1.5px;}
+.profile-joined{font-size:12px;color:var(--muted);margin-top:2px;}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px;text-align:center;}
+.stat-val{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--gold);}
+.stat-lbl{font-size:11px;color:var(--muted);letter-spacing:1px;margin-top:2px;}
+.history-list{overflow-y:auto;flex:1;padding:0 12px 20px;}
+.history-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:8px;}
+.history-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.history-date{font-size:13px;color:var(--muted);}
+.history-total{font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--gold);}
+.history-breakdown{display:flex;gap:8px;}
+.dist-badge{padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600;background:var(--surface2);border:1px solid var(--border);}
+.history-actions{display:flex;gap:8px;margin-top:10px;}
+.icon-btn{padding:5px 10px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-size:12px;cursor:pointer;}
+.icon-btn.danger{color:var(--red);border-color:rgba(239,68,68,.3);}
+
+/* ── NEW TOURNAMENT - PLAYER SELECT ── */
+.player-select-grid{padding:12px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;flex:1;}
+.select-card{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--surface);border-radius:var(--r);border:2px solid var(--border);cursor:pointer;transition:all .2s;}
+.select-card.selected{border-color:var(--gold);background:rgba(240,180,41,.08);}
+.select-card .check{width:24px;height:24px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .2s;flex-shrink:0;margin-left:auto;}
+.select-card.selected .check{background:var(--gold);border-color:var(--gold);color:#000;}
+
+/* ── SCORING SCREEN ── */
+.scoring-header{padding:12px 16px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.scoring-player-tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none;}
+.scoring-player-tabs::-webkit-scrollbar{display:none;}
+.ptab{padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600;border:1.5px solid var(--border);background:var(--surface2);cursor:pointer;white-space:nowrap;transition:all .2s;flex-shrink:0;}
+.ptab.active{background:var(--gold);border-color:var(--gold);color:#000;}
+.ptab.done{border-color:var(--green);color:var(--green);background:rgba(34,197,94,.1);}
+.scoring-body{flex:1;overflow-y:auto;display:flex;flex-direction:column;}
+.grand-display{text-align:center;padding:10px 16px 6px;}
+.grand-num{font-family:'Bebas Neue',sans-serif;font-size:72px;line-height:1;color:var(--text);transition:all .3s;}
+.grand-num.bump{color:var(--gold);transform:scale(1.1);}
+.grand-lbl{font-size:11px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;}
+.dist-grids{padding:0 12px;display:flex;flex-direction:column;gap:10px;}
+.dist-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px;}
+.dist-block-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.dist-block-title{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;color:var(--gold);}
+.dist-block-total{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--text);}
+.dist-block.inactive{opacity:.4;pointer-events:none;}
+.rounds{display:flex;flex-direction:column;gap:5px;}
+.round-row{display:flex;gap:4px;align-items:center;}
+.sbox{width:42px;height:42px;border-radius:8px;background:var(--surface2);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:19px;color:var(--muted);transition:all .2s;flex-shrink:0;}
+.sbox.filled{background:rgba(240,180,41,.12);border-color:var(--gold);color:var(--gold);}
+.sbox.current{border-color:var(--blue);animation:pulse 1.2s ease infinite;}
+.sbox.rtotal{background:var(--surface2);border-color:rgba(255,255,255,.15);color:rgba(255,255,255,.5);font-size:16px;margin-left:3px;}
+.sbox.rtotal.filled{border-color:var(--gold);color:var(--gold);background:rgba(240,180,41,.2);}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(96,165,250,.4);}50%{box-shadow:0 0 0 5px rgba(96,165,250,0);}}
+.target-wrap{position:relative;margin:10px 12px 0;border-radius:var(--r);overflow:hidden;background:#000;flex-shrink:0;}
+.target-img{width:100%;display:block;user-select:none;pointer-events:none;}
+.target-svg{position:absolute;inset:0;width:100%;height:100%;}
+
+/* ── MODALS ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);opacity:0;pointer-events:none;transition:opacity .3s;}
+.overlay.show{opacity:1;pointer-events:all;}
+.modal-box{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px 24px;width:100%;max-width:360px;transform:scale(.88) translateY(20px);transition:transform .35s cubic-bezier(.34,1.56,.64,1);box-shadow:0 24px 80px rgba(0,0,0,.6);}
+.overlay.show .modal-box{transform:scale(1) translateY(0);}
+.modal-title{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:1.5px;color:var(--gold);margin-bottom:8px;}
+.modal-body{font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:22px;}
+.modal-btns{display:flex;gap:10px;}
+.mbtn{flex:1;padding:13px;border-radius:12px;border:none;font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1px;cursor:pointer;transition:transform .15s,filter .15s;}
+.mbtn:active{transform:scale(.96);}
+.mbtn-yes{background:var(--gold);color:#000;}
+.mbtn-no{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
+
+/* Reward modal */
+.reward-box{background:linear-gradient(160deg,#1c2a1c 0%,#0d1117 70%);border-color:var(--green);text-align:center;position:relative;overflow:hidden;}
+.reward-trophy{font-size:52px;margin-bottom:12px;display:block;animation:bounce .6s .3s both;}
+@keyframes bounce{from{transform:scale(0) rotate(-20deg);}60%{transform:scale(1.2) rotate(5deg);}to{transform:scale(1) rotate(0);};}
+.reward-grand{font-family:'Bebas Neue',sans-serif;font-size:96px;line-height:1;color:var(--gold);text-shadow:0 0 60px rgba(240,180,41,.5);animation:zoomScore .6s .5s both;}
+@keyframes zoomScore{from{transform:scale(.2);opacity:0;}to{transform:scale(1);opacity:1;};}
+.reward-breakdown{display:flex;justify-content:center;gap:16px;margin:12px 0 20px;}
+.rbd{text-align:center;}
+.rbd-val{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--text);}
+.rbd-lbl{font-size:11px;color:var(--muted);letter-spacing:1px;}
+.reward-player-name{font-size:13px;color:var(--muted);margin-bottom:4px;}
+.close-circle{margin:16px auto 0;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.2);color:rgba(255,255,255,.4);font-size:16px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .2s;}
+.close-circle:active{background:rgba(255,255,255,.15);}
+
+/* toast */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface2);border:1px solid var(--border);border-radius:30px;padding:10px 20px;font-size:13px;font-weight:500;z-index:300;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+canvas#confetti{position:fixed;inset:0;z-index:190;pointer-events:none;}
+</style>
+</head>
+<body>
+<canvas id="confetti"></canvas>
+<div class="toast" id="toast"></div>
+
+<div id="app">
+
+<!-- ══════════ HOME SCREEN ══════════ -->
+<div class="screen" id="screen-home">
+  <div class="home-header">
+    <div class="home-title">🏹 NASP<br>ARCHERY</div>
+    <div class="home-sub">SCORE KEEPER · LOCAL DATABASE</div>
+    <div class="home-actions">
+      <button class="btn-primary" onclick="nav('screen-new-tournament')">NEW TOURNAMENT</button>
+      <button class="btn-secondary" onclick="nav('screen-players')">PLAYERS</button>
+    </div>
+  </div>
+  <div class="section-label">Recent Tournaments</div>
+  <div class="player-list" id="recent-list">
+    <div class="empty-state"><div class="icon">🎯</div><p>No tournaments yet.<br>Add players and start shooting!</p></div>
+  </div>
+</div>
+
+<!-- ══════════ PLAYERS SCREEN ══════════ -->
+<div class="screen hidden" id="screen-players">
+  <div class="topbar">
+    <div class="topbar-back" onclick="nav('screen-home')">←</div>
+    <h2>PLAYERS</h2>
+    <button class="topbar-action" onclick="nav('screen-add-player')">+ ADD</button>
+  </div>
+  <div class="player-list" id="all-players-list">
+    <div class="empty-state"><div class="icon">👤</div><p>No players yet.<br>Tap "+ ADD" to create one.</p></div>
+  </div>
+</div>
+
+<!-- ══════════ ADD PLAYER ══════════ -->
+<div class="screen hidden" id="screen-add-player">
+  <div class="topbar">
+    <div class="topbar-back" onclick="nav('screen-players')">←</div>
+    <h2>NEW PLAYER</h2>
+  </div>
+  <div class="form-body">
+    <div class="field">
+      <label>Full Name</label>
+      <input type="text" id="inp-name" placeholder="e.g. Alex Johnson" autocomplete="off">
+    </div>
+    <div class="field">
+      <label>Grade / Division</label>
+      <select id="inp-grade">
+        <option value="">Select grade</option>
+        <option>3rd Grade</option><option>4th Grade</option><option>5th Grade</option>
+        <option>6th Grade</option><option>7th Grade</option><option>8th Grade</option>
+        <option>9th Grade</option><option>10th Grade</option><option>11th Grade</option>
+        <option>12th Grade</option><option>Adult</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Avatar</label>
+      <div class="avatar-grid" id="avatar-grid"></div>
+    </div>
+  </div>
+  <div class="form-footer">
+    <button class="btn-primary" style="width:100%" onclick="savePlayer()">CREATE PLAYER</button>
+  </div>
+</div>
+
+<!-- ══════════ PLAYER PROFILE ══════════ -->
+<div class="screen hidden" id="screen-profile">
+  <div class="topbar">
+    <div class="topbar-back" onclick="nav('screen-players')">←</div>
+    <h2 id="profile-topbar-name">PLAYER</h2>
+    <button class="topbar-action" id="btn-shoot-this-player" onclick="startTournamentForPlayer()">SHOOT</button>
+  </div>
+  <div class="profile-hero">
+    <div class="profile-row">
+      <div class="profile-avatar" id="profile-avatar"></div>
+      <div>
+        <div class="profile-name" id="profile-name"></div>
+        <div class="profile-joined" id="profile-grade"></div>
+        <div class="profile-joined" id="profile-joined"></div>
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-val" id="stat-best">—</div><div class="stat-lbl">Best Score</div></div>
+      <div class="stat-card"><div class="stat-val" id="stat-avg">—</div><div class="stat-lbl">Average</div></div>
+      <div class="stat-card"><div class="stat-val" id="stat-rounds">0</div><div class="stat-lbl">Tournaments</div></div>
+    </div>
+  </div>
+  <div class="section-label">History</div>
+  <div class="history-list" id="history-list"></div>
+</div>
+
+<!-- ══════════ NEW TOURNAMENT – SELECT PLAYERS ══════════ -->
+<div class="screen hidden" id="screen-new-tournament">
+  <div class="topbar">
+    <div class="topbar-back" onclick="nav('screen-home')">←</div>
+    <h2>SELECT PLAYERS</h2>
+    <button class="topbar-action" id="btn-start-tourney" onclick="startTournament()">START</button>
+  </div>
+  <div class="player-select-grid" id="tourney-player-list">
+    <div class="empty-state"><div class="icon">👤</div><p>No players found.<br>Go to Players to add some first.</p></div>
+  </div>
+</div>
+
+<!-- ══════════ SCORING SCREEN ══════════ -->
+<div class="screen hidden" id="screen-scoring">
+  <div class="scoring-header">
+    <div class="scoring-player-tabs" id="player-tabs"></div>
+  </div>
+  <div class="scoring-body" id="scoring-body">
+    <div class="grand-display">
+      <div class="grand-num" id="grand-num">0</div>
+      <div class="grand-lbl">Grand Total</div>
+    </div>
+    <div class="dist-grids">
+      <div class="dist-block" id="dist-block-10">
+        <div class="dist-block-header">
+          <div class="dist-block-title">⬤ 10 METERS</div>
+          <div class="dist-block-total" id="dist-total-10">—</div>
+        </div>
+        <div class="rounds" id="rounds-10"></div>
+      </div>
+      <div class="dist-block inactive" id="dist-block-15">
+        <div class="dist-block-header">
+          <div class="dist-block-title">◎ 15 METERS</div>
+          <div class="dist-block-total" id="dist-total-15">—</div>
+        </div>
+        <div class="rounds" id="rounds-15"></div>
+      </div>
+    </div>
+    <div class="target-wrap">
+      <img class="target-img" id="target-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Archery_target_80cm.svg/600px-Archery_target_80cm.svg.png" alt="Target">
+      <svg class="target-svg" id="target-svg" viewBox="0 0 100 100"></svg>
+    </div>
+  </div>
+</div>
+
+</div><!-- /app -->
+
+<!-- ══════════ MODALS ══════════ -->
+<div class="overlay" id="overlay-confirm">
+  <div class="modal-box">
+    <div class="modal-title" id="confirm-modal-title">CONFIRM SCORES?</div>
+    <div class="modal-body" id="confirm-modal-body"></div>
+    <div class="modal-btns">
+      <button class="mbtn mbtn-no" onclick="confirmNo()">← GO BACK</button>
+      <button class="mbtn mbtn-yes" onclick="confirmYes()">CONFIRM ✓</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay-reward">
+  <div class="modal-box reward-box">
+    <span class="reward-trophy">🏆</span>
+    <div class="reward-player-name" id="reward-player-name"></div>
+    <div class="grand-lbl" style="margin-bottom:4px">FINAL SCORE</div>
+    <div class="reward-grand" id="reward-grand"></div>
+    <div class="reward-breakdown">
+      <div class="rbd"><div class="rbd-val" id="rbd-10"></div><div class="rbd-lbl">10 METERS</div></div>
+      <div style="color:var(--border);display:flex;align-items:center;">|</div>
+      <div class="rbd"><div class="rbd-val" id="rbd-15"></div><div class="rbd-lbl">15 METERS</div></div>
+    </div>
+    <div class="close-circle" onclick="closeReward()">✕</div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay-delete">
+  <div class="modal-box">
+    <div class="modal-title">DELETE SCORE?</div>
+    <div class="modal-body">This will permanently remove this tournament score. This cannot be undone.</div>
+    <div class="modal-btns">
+      <button class="mbtn mbtn-no" onclick="closeOverlay('overlay-delete')">CANCEL</button>
+      <button class="mbtn" style="background:var(--red);color:#fff;flex:1;padding:13px;border-radius:12px;border:none;font-family:'Bebas Neue',sans-serif;font-size:18px;cursor:pointer;" onclick="confirmDeleteScore()">DELETE</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+//  DATABASE (IndexedDB)
+// ══════════════════════════════════════════
+let db;
+const DB_NAME = 'nasp_archery_v1';
+const DB_VER  = 1;
+
+function initDB() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open(DB_NAME, DB_VER);
+    req.onupgradeneeded = e => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains('players')) {
+        const ps = d.createObjectStore('players', {keyPath:'id', autoIncrement:true});
+        ps.createIndex('name','name',{unique:false});
+      }
+      if (!d.objectStoreNames.contains('scores')) {
+        const ss = d.createObjectStore('scores', {keyPath:'id', autoIncrement:true});
+        ss.createIndex('playerId','playerId',{unique:false});
+        ss.createIndex('date','date',{unique:false});
+      }
+    };
+    req.onsuccess = e => { db = e.target.result; res(); };
+    req.onerror   = e => rej(e);
+  });
+}
+
+function dbGet(store, id) {
+  return new Promise((res,rej) => {
+    const tx = db.transaction(store,'readonly');
+    tx.objectStore(store).get(id).onsuccess = e => res(e.target.result);
+  });
+}
+function dbGetAll(store) {
+  return new Promise((res,rej) => {
+    const tx = db.transaction(store,'readonly');
+    tx.objectStore(store).getAll().onsuccess = e => res(e.target.result);
+  });
+}
+function dbGetByIndex(store, index, val) {
+  return new Promise((res,rej) => {
+    const tx = db.transaction(store,'readonly');
+    tx.objectStore(store).index(index).getAll(val).onsuccess = e => res(e.target.result);
+  });
+}
+function dbPut(store, data) {
+  return new Promise((res,rej) => {
+    const tx = db.transaction(store,'readwrite');
+    const req = tx.objectStore(store).put(data);
+    req.onsuccess = e => res(e.target.result);
+    req.onerror   = e => rej(e);
+  });
+}
+function dbDelete(store, id) {
+  return new Promise((res,rej) => {
+    const tx = db.transaction(store,'readwrite');
+    tx.objectStore(store).delete(id).onsuccess = e => res();
+  });
+}
+
+// ══════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════
+let currentScreen = 'screen-home';
+function nav(screenId, back=false) {
+  document.getElementById(currentScreen)?.classList.add(back ? 'hidden' : 'slide-left');
+  document.getElementById(currentScreen)?.classList.remove('hidden','slide-left');
+  const prev = document.getElementById(currentScreen);
+  if(prev){prev.classList.remove('hidden','slide-left'); prev.classList.add(back?'hidden':'slide-left');}
+  const next = document.getElementById(screenId);
+  if(next){next.classList.remove('hidden','slide-left');}
+  currentScreen = screenId;
+  // Refresh on arrival
+  if(screenId === 'screen-home') renderHome();
+  if(screenId === 'screen-players') renderPlayerList();
+  if(screenId === 'screen-new-tournament') renderTourneyPlayerSelect();
+}
+
+// ══════════════════════════════════════════
+//  AVATARS
+// ══════════════════════════════════════════
+const AVATARS = ['🏹','🎯','⭐','🦅','🐺','🦁','🔥','❄️','⚡','🌟','🏆','💎'];
+let selectedAvatar = '🏹';
+function buildAvatarGrid() {
+  const g = document.getElementById('avatar-grid');
+  g.innerHTML = '';
+  AVATARS.forEach(a => {
+    const d = document.createElement('div');
+    d.className = 'av-opt' + (a===selectedAvatar?' selected':'');
+    d.textContent = a;
+    d.onclick = () => { selectedAvatar = a; buildAvatarGrid(); };
+    g.appendChild(d);
+  });
+}
+
+// ══════════════════════════════════════════
+//  HOME
+// ══════════════════════════════════════════
+async function renderHome() {
+  const list = document.getElementById('recent-list');
+  const scores = await dbGetAll('scores');
+  const players = await dbGetAll('players');
+  const pMap = {};
+  players.forEach(p => pMap[p.id] = p);
+
+  if (!scores.length) {
+    list.innerHTML = '<div class="empty-state"><div class="icon">🎯</div><p>No tournaments yet.<br>Add players and start shooting!</p></div>';
+    return;
+  }
+
+  // Sort by date desc
+  scores.sort((a,b) => new Date(b.date) - new Date(a.date));
+  const recent = scores.slice(0, 20);
+
+  list.innerHTML = recent.map(s => {
+    const p = pMap[s.playerId];
+    if (!p) return '';
+    return `<div class="player-card" onclick="openProfile(${p.id})">
+      <div class="player-avatar">${p.avatar}</div>
+      <div class="player-info">
+        <div class="player-name">${p.name}</div>
+        <div class="player-meta">${formatDate(s.date)}</div>
+      </div>
+      <div class="player-best">${s.grand}</div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════
+//  PLAYERS
+// ══════════════════════════════════════════
+async function renderPlayerList() {
+  const players = await dbGetAll('players');
+  const list = document.getElementById('all-players-list');
+  if (!players.length) {
+    list.innerHTML = '<div class="empty-state"><div class="icon">👤</div><p>No players yet.<br>Tap "+ ADD" to create one.</p></div>';
+    return;
+  }
+  // Enrich with scores
+  const allScores = await dbGetAll('scores');
+  const scoresByPlayer = {};
+  allScores.forEach(s => {
+    if (!scoresByPlayer[s.playerId]) scoresByPlayer[s.playerId] = [];
+    scoresByPlayer[s.playerId].push(s);
+  });
+
+  list.innerHTML = players.map(p => {
+    const ps = scoresByPlayer[p.id] || [];
+    const best = ps.length ? Math.max(...ps.map(s=>s.grand)) : null;
+    return `<div class="player-card" onclick="openProfile(${p.id})">
+      <div class="player-avatar">${p.avatar}</div>
+      <div class="player-info">
+        <div class="player-name">${p.name}</div>
+        <div class="player-meta">${p.grade || 'No grade'} · ${ps.length} tournament${ps.length!==1?'s':''}</div>
+      </div>
+      <div class="player-best">${best !== null ? best : '—'}</div>
+    </div>`;
+  }).join('');
+}
+
+async function savePlayer() {
+  const name = document.getElementById('inp-name').value.trim();
+  if (!name) { showToast('Please enter a name'); return; }
+  const grade = document.getElementById('inp-grade').value;
+  await dbPut('players', { name, grade, avatar: selectedAvatar, joined: new Date().toISOString() });
+  showToast('Player created!');
+  selectedAvatar = '🏹';
+  document.getElementById('inp-name').value = '';
+  document.getElementById('inp-grade').value = '';
+  buildAvatarGrid();
+  nav('screen-players');
+}
+
+// ══════════════════════════════════════════
+//  PROFILE
+// ══════════════════════════════════════════
+let activeProfileId = null;
+let deleteScoreId = null;
+
+async function openProfile(pid) {
+  activeProfileId = pid;
+  const p = await dbGet('players', pid);
+  if (!p) return;
+  document.getElementById('profile-topbar-name').textContent = p.name.split(' ')[0].toUpperCase();
+  document.getElementById('profile-avatar').textContent = p.avatar;
+  document.getElementById('profile-name').textContent = p.name;
+  document.getElementById('profile-grade').textContent = p.grade || '';
+  document.getElementById('profile-joined').textContent = 'Joined ' + formatDate(p.joined);
+
+  const scores = await dbGetByIndex('scores', 'playerId', pid);
+  scores.sort((a,b) => new Date(b.date)-new Date(a.date));
+
+  const grands = scores.map(s=>s.grand);
+  document.getElementById('stat-best').textContent = grands.length ? Math.max(...grands) : '—';
+  document.getElementById('stat-avg').textContent = grands.length ? Math.round(grands.reduce((a,b)=>a+b,0)/grands.length) : '—';
+  document.getElementById('stat-rounds').textContent = scores.length;
+
+  const hl = document.getElementById('history-list');
+  if (!scores.length) {
+    hl.innerHTML = '<div class="empty-state"><div class="icon">📋</div><p>No scores recorded yet.</p></div>';
+  } else {
+    hl.innerHTML = scores.map(s => `
+      <div class="history-card">
+        <div class="history-header">
+          <div class="history-date">${formatDate(s.date)}</div>
+          <div class="history-total">${s.grand}</div>
+        </div>
+        <div class="history-breakdown">
+          <div class="dist-badge">10m: ${s.score10}</div>
+          <div class="dist-badge">15m: ${s.score15}</div>
+        </div>
+        <div class="history-actions">
+          <button class="icon-btn danger" onclick="promptDeleteScore(${s.id})">🗑 Delete</button>
+        </div>
+      </div>`).join('');
+  }
+  nav('screen-profile');
+}
+
+function promptDeleteScore(sid) {
+  deleteScoreId = sid;
+  openOverlay('overlay-delete');
+}
+async function confirmDeleteScore() {
+  if (deleteScoreId) await dbDelete('scores', deleteScoreId);
+  closeOverlay('overlay-delete');
+  openProfile(activeProfileId);
+  showToast('Score deleted');
+}
+
+function startTournamentForPlayer() {
+  if (!activeProfileId) return;
+  tourneySelectedPlayers = [activeProfileId];
+  launchScoring();
+}
+
+// ══════════════════════════════════════════
+//  NEW TOURNAMENT – PLAYER SELECT
+// ══════════════════════════════════════════
+let tourneySelectedPlayers = [];
+
+async function renderTourneyPlayerSelect() {
+  tourneySelectedPlayers = [];
+  const players = await dbGetAll('players');
+  const list = document.getElementById('tourney-player-list');
+  if (!players.length) {
+    list.innerHTML = '<div class="empty-state"><div class="icon">👤</div><p>No players found.<br>Go to Players to add some first.</p></div>';
+    return;
+  }
+  list.innerHTML = players.map(p => `
+    <div class="select-card" id="sc-${p.id}" onclick="toggleSelectPlayer(${p.id})">
+      <div class="player-avatar" style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#d4860a);display:flex;align-items:center;justify-content:center;font-size:22px;color:#000;flex-shrink:0;">${p.avatar}</div>
+      <div class="player-info"><div class="player-name">${p.name}</div><div class="player-meta">${p.grade||'—'}</div></div>
+      <div class="check" id="chk-${p.id}"></div>
+    </div>`).join('');
+}
+
+function toggleSelectPlayer(pid) {
+  const idx = tourneySelectedPlayers.indexOf(pid);
+  if (idx > -1) {
+    tourneySelectedPlayers.splice(idx,1);
+    document.getElementById(`sc-${pid}`).classList.remove('selected');
+    document.getElementById(`chk-${pid}`).textContent = '';
+  } else {
+    tourneySelectedPlayers.push(pid);
+    document.getElementById(`sc-${pid}`).classList.add('selected');
+    document.getElementById(`chk-${pid}`).textContent = '✓';
+  }
+}
+
+function startTournament() {
+  if (!tourneySelectedPlayers.length) { showToast('Select at least one player'); return; }
+  launchScoring();
+}
+
+// ══════════════════════════════════════════
+//  SCORING ENGINE
+// ══════════════════════════════════════════
+const ROUNDS=3, SHOTS=5;
+let scoringPlayers = []; // [{id, name, avatar, state}]
+let activePlayerIdx = 0;
+let pendingConfirmDist = null; // '10m' or '15m'
+
+function freshPlayerState() {
+  return {
+    phase: '10m',
+    scores: {
+      '10m': Array.from({length:ROUNDS},()=>Array(SHOTS).fill(null)),
+      '15m': Array.from({length:ROUNDS},()=>Array(SHOTS).fill(null)),
+    },
+    confirmed10: false,
+    confirmed15: false,
+    round: 0,
+    shot: 0,
+    done: false,
+  };
+}
+
+async function launchScoring() {
+  const players = await Promise.all(tourneySelectedPlayers.map(id => dbGet('players', id)));
+  scoringPlayers = players.filter(Boolean).map(p => ({...p, state: freshPlayerState()}));
+  activePlayerIdx = 0;
+  nav('screen-scoring');
+  buildRoundGrids('10');
+  buildRoundGrids('15');
+  buildTargetSVG();
+  buildPlayerTabs();
+  renderScoringUI();
+}
+
+function buildRoundGrids(distId) {
+  const container = document.getElementById(`rounds-${distId}`);
+  container.innerHTML = '';
+  for (let r=0;r<ROUNDS;r++) {
+    const row = document.createElement('div');
+    row.className = 'round-row';
+    for (let s=0;s<SHOTS;s++) {
+      const b = document.createElement('div');
+      b.className = 'sbox';
+      b.id = `sbox-${distId}-${r}-${s}`;
+      row.appendChild(b);
+    }
+    const t = document.createElement('div');
+    t.className = 'sbox rtotal';
+    t.id = `sbox-${distId}-${r}-t`;
+    row.appendChild(t);
+    container.appendChild(row);
+  }
+}
+
+function buildPlayerTabs() {
+  const tabs = document.getElementById('player-tabs');
+  tabs.innerHTML = scoringPlayers.map((p,i) => `
+    <div class="ptab${i===activePlayerIdx?' active':''}${p.state.done?' done':''}" id="ptab-${i}" onclick="switchPlayer(${i})">${p.avatar} ${p.name.split(' ')[0]}</div>
+  `).join('');
+}
+
+function switchPlayer(idx) {
+  activePlayerIdx = idx;
+  buildPlayerTabs();
+  renderScoringUI();
+}
+
+function renderScoringUI() {
+  const ps = scoringPlayers[activePlayerIdx].state;
+  const dist = ps.phase;
+
+  // Grand total
+  const gt = flatSum(ps.scores['10m']) + flatSum(ps.scores['15m']);
+  const el = document.getElementById('grand-num');
+  el.textContent = gt;
+  el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump');
+  setTimeout(()=>el.classList.remove('bump'),400);
+
+  // Dist totals
+  const t10 = flatSum(ps.scores['10m']);
+  const t15 = flatSum(ps.scores['15m']);
+  document.getElementById('dist-total-10').textContent = ps.confirmed10 ? t10 : (t10>0?t10:'—');
+  document.getElementById('dist-total-15').textContent = ps.confirmed15 ? t15 : (t15>0?t15:'—');
+
+  // Active/inactive blocks
+  document.getElementById('dist-block-10').classList.toggle('inactive', dist==='15m');
+  document.getElementById('dist-block-15').classList.toggle('inactive', dist==='10m');
+
+  // Fill boxes
+  ['10m','15m'].forEach((d,di) => {
+    const did = di===0?'10':'15';
+    for (let r=0;r<ROUNDS;r++) {
+      let rowSum=0, rowFilled=0;
+      for (let s=0;s<SHOTS;s++) {
+        const b = document.getElementById(`sbox-${did}-${r}-${s}`);
+        const v = ps.scores[d][r][s];
+        if (v!==null) {
+          b.textContent = v===0?'M':v;
+          b.className = 'sbox filled';
+          rowSum+=v; rowFilled++;
+        } else {
+          b.textContent='';
+          b.className = 'sbox';
+          // Highlight current
+          if (d===dist && r===ps.round && s===ps.shot && !ps.done) {
+            b.classList.add('current');
+          }
+        }
+      }
+      const tb = document.getElementById(`sbox-${did}-${r}-t`);
+      if (rowFilled===SHOTS) {
+        tb.textContent=rowSum; tb.className='sbox rtotal filled';
+      } else {
+        tb.textContent=''; tb.className='sbox rtotal';
+      }
+    }
+  });
+}
+
+function flatSum(arr2d) {
+  return arr2d.flat().reduce((a,v)=>a+(v||0),0);
+}
+
+function addScore(val) {
+  const sp = scoringPlayers[activePlayerIdx];
+  const ps = sp.state;
+  if (ps.done) { showToast(`${sp.name.split(' ')[0]} is done`); return; }
+
+  const dist = ps.phase;
+  ps.scores[dist][ps.round][ps.shot] = val;
+  ps.shot++;
+
+  if (ps.shot >= SHOTS) {
+    ps.shot = 0;
+    ps.round++;
+    if (ps.round >= ROUNDS) {
+      ps.round = ROUNDS; // cap
+      renderScoringUI();
+      setTimeout(() => showConfirmModal(dist), 300);
+      return;
+    }
+  }
+  renderScoringUI();
+}
+
+// ── Confirm modal ──
+function showConfirmModal(dist) {
+  pendingConfirmDist = dist;
+  const sp = scoringPlayers[activePlayerIdx];
+  const total = flatSum(sp.state.scores[dist]);
+  const label = dist==='10m'?'10 Meter':'15 Meter';
+  document.getElementById('confirm-modal-title').textContent = `CONFIRM ${label.toUpperCase()}`;
+  document.getElementById('confirm-modal-body').textContent =
+    `${sp.name}'s ${label} total is ${total}. Lock in this score?`;
+  openOverlay('overlay-confirm');
+}
+
+function confirmNo() {
+  closeOverlay('overlay-confirm');
+  const ps = scoringPlayers[activePlayerIdx].state;
+  const dist = pendingConfirmDist;
+  // Remove last entered shot
+  outer: for (let r=ROUNDS-1;r>=0;r--) {
+    for (let s=SHOTS-1;s>=0;s--) {
+      if (ps.scores[dist][r][s]!==null) {
+        ps.scores[dist][r][s]=null;
+        ps.round=r; ps.shot=s;
+        break outer;
+      }
+    }
+  }
+  renderScoringUI();
+}
+
+async function confirmYes() {
+  closeOverlay('overlay-confirm');
+  const sp = scoringPlayers[activePlayerIdx];
+  const ps = sp.state;
+
+  if (pendingConfirmDist === '10m') {
+    ps.confirmed10 = true;
+    ps.phase = '15m';
+    ps.round = 0;
+    ps.shot = 0;
+    ps.scores['15m'] = Array.from({length:ROUNDS},()=>Array(SHOTS).fill(null));
+    renderScoringUI();
+    showToast('10m locked! Now shoot 15 meters.');
+  } else if (pendingConfirmDist === '15m') {
+    ps.confirmed15 = true;
+    ps.done = true;
+    // Save to DB
+    const grand = flatSum(ps.scores['10m']) + flatSum(ps.scores['15m']);
+    const score10 = flatSum(ps.scores['10m']);
+    const score15 = flatSum(ps.scores['15m']);
+    await dbPut('scores', {
+      playerId: sp.id,
+      date: new Date().toISOString(),
+      grand, score10, score15,
+      rounds10: ps.scores['10m'],
+      rounds15: ps.scores['15m'],
+    });
+    buildPlayerTabs();
+    renderScoringUI();
+    showReward(sp, grand, score10, score15);
+  }
+}
+
+// ── Reward ──
+function showReward(sp, grand, s10, s15) {
+  document.getElementById('reward-player-name').textContent = sp.name;
+  document.getElementById('reward-grand').textContent = grand;
+  document.getElementById('rbd-10').textContent = s10;
+  document.getElementById('rbd-15').textContent = s15;
+  openOverlay('overlay-reward');
+  launchConfetti();
+}
+
+function closeReward() {
+  closeOverlay('overlay-reward');
+  stopConfetti();
+  // Check if all players done
+  const allDone = scoringPlayers.every(p=>p.state.done);
+  if (allDone) {
+    showToast('Tournament complete!');
+    setTimeout(()=>nav('screen-home'), 500);
+  }
+}
+
+// ══════════════════════════════════════════
+//  TARGET SVG
+// ══════════════════════════════════════════
+function buildTargetSVG() {
+  const svg = document.getElementById('target-svg');
+  svg.innerHTML = '';
+
+  // Zones from outside in: 1(white)=57r, 2=50r, 3=43r, 4=36r, 5(blue)=29r, 6(blue)=23r, 7(red)=17r, 8(red)=12r, 9(gold)=8r, 10(gold)=4.5r
+  const rings = [
+    {val:1, outer:57, inner:50, lx:50, ly:50, la:45},
+    {val:2, outer:50, inner:43, lx:50, ly:50, la:45},
+    {val:3, outer:43, inner:36, lx:50, ly:50, la:45},
+    {val:4, outer:36, inner:29, lx:50, ly:50, la:45},
+    {val:5, outer:29, inner:23, lx:50, ly:50, la:45},
+    {val:6, outer:23, inner:17, lx:50, ly:50, la:45},
+    {val:7, outer:17, inner:12, lx:50, ly:50, la:45},
+    {val:8, outer:12, inner:8,  lx:50, ly:50, la:45},
+    {val:9, outer:8,  inner:4.5,lx:50, ly:50, la:45},
+    {val:10, outer:4.5, inner:0,lx:50, ly:50, la:45},
+  ];
+
+  rings.forEach((zone, i) => {
+    const g = createSVGEl('g');
+    g.style.cursor = 'pointer';
+
+    // Clickable area
+    if (zone.inner === 0) {
+      const c = createSVGEl('circle');
+      c.setAttribute('cx','50'); c.setAttribute('cy','50'); c.setAttribute('r', zone.outer);
+      c.setAttribute('fill','transparent');
+      g.appendChild(c);
+    } else {
+      const path = createSVGEl('path');
+      path.setAttribute('d', ringPath(50,50,zone.outer,zone.inner));
+      path.setAttribute('fill','transparent');
+      path.setAttribute('fill-rule','evenodd');
+      g.appendChild(path);
+    }
+
+    // Label at 45° angle in the ring
+    const ang = -45 * Math.PI/180;
+    const mr = zone.inner===0 ? zone.outer/2 : (zone.inner+zone.outer)/2;
+    const lx = 50 + mr * Math.cos(ang);
+    const ly = 50 + mr * Math.sin(ang);
+    const fs = zone.val >= 9 ? '3.2' : zone.val >= 7 ? '3.8' : '4.2';
+
+    const shadow = createSVGEl('text');
+    setAttrs(shadow, {x:lx+.25,y:ly+.35,'text-anchor':'middle','dominant-baseline':'middle',
+      fill:'rgba(0,0,0,0.7)','font-size':fs,'font-family':'Bebas Neue, sans-serif','font-weight':'700','pointer-events':'none'});
+    shadow.textContent = zone.val;
+
+    const label = createSVGEl('text');
+    setAttrs(label, {x:lx,y:ly,'text-anchor':'middle','dominant-baseline':'middle',
+      fill:'white','font-size':fs,'font-family':'Bebas Neue, sans-serif','font-weight':'700','pointer-events':'none'});
+    label.textContent = zone.val;
+
+    g.appendChild(shadow); g.appendChild(label);
+    g.addEventListener('click', () => addScore(zone.val));
+    g.addEventListener('touchend', e => { e.preventDefault(); addScore(zone.val); });
+    svg.appendChild(g);
+  });
+
+  // MISS button
+  const mg = createSVGEl('g');
+  mg.style.cursor='pointer';
+  const mc = createSVGEl('circle');
+  setAttrs(mc,{cx:'50',cy:'91',r:'4.5',fill:'rgba(0,0,0,0.6)',stroke:'rgba(255,255,255,0.6)','stroke-width':'0.5'});
+  const ml = createSVGEl('text');
+  setAttrs(ml,{x:'50',y:'91.4','text-anchor':'middle','dominant-baseline':'middle',fill:'white','font-size':'3.5','font-family':'Bebas Neue, sans-serif','font-weight':'700','pointer-events':'none'});
+  ml.textContent='M';
+  mg.appendChild(mc); mg.appendChild(ml);
+  mg.addEventListener('click',()=>addScore(0));
+  mg.addEventListener('touchend',e=>{e.preventDefault();addScore(0);});
+  svg.appendChild(mg);
+}
+
+function ringPath(cx,cy,r1,r2) {
+  const arc = r => `M ${cx+r} ${cy} A ${r} ${r} 0 1 0 ${cx+r-.001} ${cy} Z`;
+  return `${arc(r1)} ${arc(r2)}`;
+}
+function createSVGEl(tag) { return document.createElementNS('http://www.w3.org/2000/svg',tag); }
+function setAttrs(el,attrs){ Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,v)); }
+
+// ══════════════════════════════════════════
+//  MODALS / OVERLAYS
+// ══════════════════════════════════════════
+function openOverlay(id){ document.getElementById(id).classList.add('show'); }
+function closeOverlay(id){ document.getElementById(id).classList.remove('show'); }
+
+// ══════════════════════════════════════════
+//  CONFETTI
+// ══════════════════════════════════════════
+let confAF, confRunning=false;
+function launchConfetti(){
+  const canvas=document.getElementById('confetti');
+  const ctx=canvas.getContext('2d');
+  canvas.width=window.innerWidth; canvas.height=window.innerHeight;
+  const cols=['#f0b429','#ff6b6b','#60a5fa','#22c55e','#f06595','#a78bfa'];
+  const parts=Array.from({length:150},()=>({
+    x:Math.random()*canvas.width, y:-20,
+    r:Math.random()*7+3, d:Math.random()*80+20,
+    col:cols[Math.floor(Math.random()*cols.length)],
+    tilt:Math.random()*10-5, ts:Math.random()*.08+.04, ang:0,
+  }));
+  confRunning=true;
+  function draw(){
+    if(!confRunning){ctx.clearRect(0,0,canvas.width,canvas.height);return;}
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    parts.forEach(p=>{
+      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.ang);
+      ctx.fillStyle=p.col; ctx.beginPath();
+      ctx.fillRect(-p.r/2,-p.r*0.2,p.r,p.r*0.4); ctx.fill();
+      ctx.restore();
+      p.y+=1.5+p.r*.15; p.x+=Math.sin(p.ang)*.8; p.ang+=p.ts;
+      if(p.y>canvas.height){p.y=-20;p.x=Math.random()*canvas.width;}
+    });
+    confAF=requestAnimationFrame(draw);
+  }
+  draw();
+  setTimeout(stopConfetti,7000);
+}
+function stopConfetti(){
+  confRunning=false;
+  cancelAnimationFrame(confAF);
+  const c=document.getElementById('confetti');
+  c.getContext('2d').clearRect(0,0,c.width,c.height);
+}
+
+// ══════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════
+let toastTimer;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),2400);
+}
+
+// ══════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════
+function formatDate(iso){
+  if(!iso) return '—';
+  const d=new Date(iso);
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+}
+
+// ══════════════════════════════════════════
+//  BOOT
+// ══════════════════════════════════════════
+selectedAvatar='🏹';
+initDB().then(()=>{
+  buildAvatarGrid();
+  renderHome();
+});
+</script>
+</body>
+</html>
