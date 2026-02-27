@@ -4,9 +4,9 @@ export const SHOTS = 5;
 export const AVATARS = ['🏹', '🎯', '⭐', '🦅', '🐺', '🦁', '🔥', '❄️', '⚡', '🌟', '🏆', '💎'];
 
 export const GRADES = [
-  '3rd Grade', '4th Grade', '5th Grade', '6th Grade',
+  '4th Grade', '5th Grade', '6th Grade',
   '7th Grade', '8th Grade', '9th Grade', '10th Grade',
-  '11th Grade', '12th Grade', 'Adult',
+  '11th Grade', '12th Grade',
 ];
 
 export const RINGS = [
