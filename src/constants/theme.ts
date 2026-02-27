@@ -16,7 +16,7 @@ export const FONTS = {
   header: 'BebasNeue_400Regular',
   body: 'DMSans_400Regular',
   bodyMedium: 'DMSans_500Medium',
-  bodySemiBold: 'DMSans_600SemiBold',
+  bodySemiBold: 'DMSans_700Bold',
 };
 
 export const SPACING = {
