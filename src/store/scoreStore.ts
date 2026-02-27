@@ -1,5 +1,5 @@
 import { Score } from './types';
-import { getItem, setItem } from './storage';
+import { getItem, setItem, generateId } from './storage';
 
 const KEY = 'nasp_scores';
 
@@ -20,7 +20,7 @@ export async function getRecentScores(limit: number): Promise<Score[]> {
 
 export async function addScore(data: Omit<Score, 'id'>): Promise<Score> {
   const scores = await getAllScores();
-  const score: Score = { id: Date.now().toString(), ...data };
+  const score: Score = { id: generateId(), ...data };
   scores.push(score);
   await setItem(KEY, scores);
   return score;
@@ -29,4 +29,9 @@ export async function addScore(data: Omit<Score, 'id'>): Promise<Score> {
 export async function deleteScore(id: string): Promise<void> {
   const scores = await getAllScores();
   await setItem(KEY, scores.filter((s) => s.id !== id));
+}
+
+export async function deleteScoresByPlayerId(playerId: string): Promise<void> {
+  const scores = await getAllScores();
+  await setItem(KEY, scores.filter((s) => s.playerId !== playerId));
 }

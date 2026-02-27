@@ -1,5 +1,5 @@
-import React, { useRef, useEffect } from 'react';
-import { StyleSheet, Dimensions } from 'react-native';
+import React, { useRef } from 'react';
+import { Dimensions } from 'react-native';
 import ConfettiCannon from 'react-native-confetti-cannon';
 import { CONFETTI_COLORS } from '../constants/scoring';
 
@@ -10,15 +10,9 @@ interface ConfettiProps {
 export function Confetti({ active }: ConfettiProps) {
   const confettiRef = useRef<ConfettiCannon>(null);
 
-  useEffect(() => {
-    if (active) {
-      confettiRef.current?.start();
-    }
-  }, [active]);
-
   if (!active) return null;
 
-  const { width, height } = Dimensions.get('window');
+  const { width } = Dimensions.get('window');
   return (
     <ConfettiCannon
       ref={confettiRef}

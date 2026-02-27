@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
 import { Text, StyleSheet, Animated } from 'react-native';
 import { COLORS, FONTS } from '../constants/theme';
 
@@ -17,6 +17,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(20)).current;
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
 
   const showToast = useCallback(
     (msg: string) => {
@@ -50,6 +56,9 @@ const styles = StyleSheet.create({
   toast: {
     position: 'absolute',
     bottom: 60,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
     alignSelf: 'center',
     backgroundColor: COLORS.surface2,
     borderWidth: 1,

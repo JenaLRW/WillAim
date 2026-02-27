@@ -14,9 +14,9 @@ export function PlayerTab({ avatar, name, isActive, isDone, onPress }: PlayerTab
   return (
     <Pressable
       onPress={onPress}
-      style={[styles.tab, isActive && styles.active, isDone && styles.done]}
+      style={[styles.tab, isDone && styles.done, isActive && (isDone ? styles.activeDone : styles.active)]}
     >
-      <Text style={[styles.text, isActive && styles.activeText, isDone && styles.doneText]}>
+      <Text style={[styles.text, isDone && styles.doneText, isActive && (isDone ? styles.activeDoneText : styles.activeText)]}>
         {avatar} {name.split(' ')[0]}
       </Text>
     </Pressable>
@@ -41,6 +41,10 @@ const styles = StyleSheet.create({
     borderColor: COLORS.green,
     backgroundColor: 'rgba(34,197,94,0.1)',
   },
+  activeDone: {
+    borderColor: COLORS.green,
+    backgroundColor: COLORS.green,
+  },
   text: {
     fontFamily: FONTS.bodySemiBold,
     fontSize: 14,
@@ -51,5 +55,8 @@ const styles = StyleSheet.create({
   },
   doneText: {
     color: COLORS.green,
+  },
+  activeDoneText: {
+    color: '#000',
   },
 });

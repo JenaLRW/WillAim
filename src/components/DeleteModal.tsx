@@ -10,7 +10,7 @@ interface DeleteModalProps {
 
 export function DeleteModal({ visible, onDelete, onCancel }: DeleteModalProps) {
   return (
-    <Modal visible={visible} transparent animationType="fade" statusBarTranslucent>
+    <Modal visible={visible} transparent animationType="fade" statusBarTranslucent onRequestClose={onCancel}>
       <View style={styles.overlay}>
         <View style={styles.box}>
           <Text style={styles.title}>DELETE SCORE?</Text>

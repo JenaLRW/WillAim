@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Alert } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, FONTS } from '../../src/constants/theme';
+import { TopBar } from '../../src/components/TopBar';
 import { PlayerTab } from '../../src/components/PlayerTab';
 import { GrandTotal } from '../../src/components/GrandTotal';
 import { ScoreGrid } from '../../src/components/ScoreGrid';
@@ -21,13 +22,14 @@ export default function ScoringScreen() {
   const params = useLocalSearchParams<{ playerIds: string }>();
   const { showToast } = useToast();
   const [initialized, setInitialized] = useState(false);
-  const [scoringPlayers, setScoringPlayers] = useState<ScoringPlayer[]>([]);
-  const { state, dispatch } = useScoring(scoringPlayers);
+  const { state, dispatch } = useScoring([]);
   const hasNavigated = useRef(false);
 
   useEffect(() => {
     (async () => {
-      const ids: string[] = JSON.parse(params.playerIds || '[]');
+      const raw = params.playerIds;
+      const idStr = Array.isArray(raw) ? raw[0] : raw;
+      const ids: string[] = JSON.parse(idStr || '[]');
       const players = await Promise.all(ids.map((id) => playerStore.getPlayerById(id)));
       const sp: ScoringPlayer[] = players
         .filter(Boolean)
@@ -37,27 +39,38 @@ export default function ScoringScreen() {
           avatar: p!.avatar,
           state: freshPlayerState(),
         }));
-      setScoringPlayers(sp);
       dispatch({ type: 'INIT', players: sp });
       setInitialized(true);
     })();
-  }, [params.playerIds]);
+  }, [params.playerIds, dispatch]);
 
   // Save score to DB when reward is shown
+  const savedRef = useRef<string | null>(null);
   useEffect(() => {
     if (state.showReward && state.rewardPlayer) {
       const rp = state.rewardPlayer;
-      scoreStore.addScore({
-        playerId: rp.id,
-        date: new Date().toISOString(),
-        grand: state.rewardGrand,
-        score10: state.rewardScore10,
-        score15: state.rewardScore15,
-        rounds10: rp.state.scores['10m'].map((r) => r.map((v) => v ?? 0)),
-        rounds15: rp.state.scores['15m'].map((r) => r.map((v) => v ?? 0)),
-      });
+      // Prevent duplicate saves for the same player in the same session
+      if (savedRef.current === rp.id) return;
+      savedRef.current = rp.id;
+
+      scoreStore
+        .addScore({
+          playerId: rp.id,
+          date: new Date().toISOString(),
+          grand: state.rewardGrand,
+          score10: state.rewardScore10,
+          score15: state.rewardScore15,
+          rounds10: rp.state.scores['10m'].map((r) => r.map((v) => v ?? 0)),
+          rounds15: rp.state.scores['15m'].map((r) => r.map((v) => v ?? 0)),
+        })
+        .catch(() => {
+          showToast('Failed to save score');
+          savedRef.current = null;
+        });
+    } else {
+      savedRef.current = null;
     }
-  }, [state.showReward]);
+  }, [state.showReward, state.rewardPlayer, state.rewardGrand, state.rewardScore10, state.rewardScore15, showToast]);
 
   // Navigate home when all done
   useEffect(() => {
@@ -65,26 +78,53 @@ export default function ScoringScreen() {
       hasNavigated.current = true;
       showToast('Tournament complete!');
       setTimeout(() => {
-        router.dismissAll();
+        try {
+          if (router.canDismiss()) router.dismissAll();
+        } catch (e) {
+          console.warn('dismissAll failed:', e);
+        }
         router.replace('/');
       }, 500);
     }
-  }, [state.allDone]);
+  }, [state.allDone, showToast, router]);
+
+  const handleExit = () => {
+    Alert.alert(
+      'Leave Tournament?',
+      'All scoring progress will be lost.',
+      [
+        { text: 'STAY', style: 'cancel' },
+        {
+          text: 'LEAVE',
+          style: 'destructive',
+          onPress: () => router.back(),
+        },
+      ],
+    );
+  };
 
   if (!initialized || state.players.length === 0) return null;
 
   const activePlayer = state.players[state.activePlayerIdx];
+  if (!activePlayer) return null;
+
   const ps = activePlayer.state;
   const grand = flatSum(ps.scores['10m']) + flatSum(ps.scores['15m']);
   const t10 = flatSum(ps.scores['10m']);
   const t15 = flatSum(ps.scores['15m']);
 
   const confirmTitle =
-    state.pendingConfirmDist === '10m' ? 'CONFIRM 10 METER' : 'CONFIRM 15 METER';
+    state.pendingConfirmDist === '10m'
+      ? 'CONFIRM 10 METER'
+      : state.pendingConfirmDist === '15m'
+        ? 'CONFIRM 15 METER'
+        : '';
   const confirmBody =
     state.pendingConfirmDist === '10m'
       ? `${activePlayer.name}'s 10 Meter total is ${t10}. Lock in this score?`
-      : `${activePlayer.name}'s 15 Meter total is ${t15}. Lock in this score?`;
+      : state.pendingConfirmDist === '15m'
+        ? `${activePlayer.name}'s 15 Meter total is ${t15}. Lock in this score?`
+        : '';
 
   const handleConfirmYes = () => {
     const was10m = state.pendingConfirmDist === '10m';
@@ -96,6 +136,8 @@ export default function ScoringScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      <TopBar title="SCORING" onBack={handleExit} />
+
       {/* Player tabs */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabBar} contentContainerStyle={styles.tabContent}>
         {state.players.map((p, i) => (

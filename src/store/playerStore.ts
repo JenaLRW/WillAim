@@ -1,5 +1,5 @@
 import { Player } from './types';
-import { getItem, setItem } from './storage';
+import { getItem, setItem, generateId } from './storage';
 
 const KEY = 'nasp_players';
 
@@ -15,7 +15,7 @@ export async function getPlayerById(id: string): Promise<Player | undefined> {
 export async function addPlayer(data: { name: string; grade: string; avatar: string }): Promise<Player> {
   const players = await getAllPlayers();
   const player: Player = {
-    id: Date.now().toString(),
+    id: generateId(),
     name: data.name,
     grade: data.grade,
     avatar: data.avatar,
@@ -29,4 +29,7 @@ export async function addPlayer(data: { name: string; grade: string; avatar: str
 export async function deletePlayer(id: string): Promise<void> {
   const players = await getAllPlayers();
   await setItem(KEY, players.filter((p) => p.id !== id));
+  // Cascade: remove orphaned scores
+  const { deleteScoresByPlayerId } = await import('./scoreStore');
+  await deleteScoresByPlayerId(id);
 }

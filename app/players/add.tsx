@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, TextInput, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, FONTS, RADII } from '../../src/constants/theme';
@@ -9,7 +9,6 @@ import { Button } from '../../src/components/Button';
 import { AvatarPicker } from '../../src/components/AvatarPicker';
 import { useToast } from '../../src/components/Toast';
 import * as playerStore from '../../src/store/playerStore';
-import { Pressable } from 'react-native';
 
 export default function AddPlayerScreen() {
   const router = useRouter();
@@ -18,15 +17,23 @@ export default function AddPlayerScreen() {
   const [grade, setGrade] = useState('');
   const [avatar, setAvatar] = useState('🏹');
   const [showGrades, setShowGrades] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
+    if (saving) return;
     if (!name.trim()) {
       showToast('Please enter a name');
       return;
     }
-    await playerStore.addPlayer({ name: name.trim(), grade, avatar });
-    showToast('Player created!');
-    router.back();
+    setSaving(true);
+    try {
+      await playerStore.addPlayer({ name: name.trim(), grade, avatar });
+      showToast('Player created!');
+      router.back();
+    } catch {
+      showToast('Failed to save player');
+      setSaving(false);
+    }
   };
 
   return (

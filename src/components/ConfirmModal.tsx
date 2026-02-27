@@ -12,7 +12,7 @@ interface ConfirmModalProps {
 
 export function ConfirmModal({ visible, title, body, onConfirm, onGoBack }: ConfirmModalProps) {
   return (
-    <Modal visible={visible} transparent animationType="fade" statusBarTranslucent>
+    <Modal visible={visible} transparent animationType="fade" statusBarTranslucent onRequestClose={onGoBack}>
       <View style={styles.overlay}>
         <View style={styles.box}>
           <Text style={styles.title}>{title}</Text>

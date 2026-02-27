@@ -7,10 +7,14 @@ export function usePlayers() {
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
-    setLoading(true);
-    const data = await playerStore.getAllPlayers();
-    setPlayers(data);
-    setLoading(false);
+    try {
+      const data = await playerStore.getAllPlayers();
+      setPlayers(data);
+    } catch {
+      // storage read failed — keep existing data
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {

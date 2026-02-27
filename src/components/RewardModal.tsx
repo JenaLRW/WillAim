@@ -19,6 +19,9 @@ export function RewardModal({ visible, playerName, grand, score10, score15, onCl
 
   useEffect(() => {
     if (visible) {
+      trophyScale.stopAnimation();
+      scoreScale.stopAnimation();
+      scoreOpacity.stopAnimation();
       trophyScale.setValue(0);
       scoreScale.setValue(0.2);
       scoreOpacity.setValue(0);
@@ -39,7 +42,7 @@ export function RewardModal({ visible, playerName, grand, score10, score15, onCl
   }, [visible, trophyScale, scoreScale, scoreOpacity]);
 
   return (
-    <Modal visible={visible} transparent animationType="fade" statusBarTranslucent>
+    <Modal visible={visible} transparent animationType="fade" statusBarTranslucent onRequestClose={onClose}>
       <View style={styles.overlay}>
         <Confetti active={visible} />
         <View style={styles.box}>

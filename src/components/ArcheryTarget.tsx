@@ -11,19 +11,19 @@ interface ArcheryTargetProps {
 const RING_COLORS = [
   '#e8e8e8', // 1 - white
   '#e8e8e8', // 2 - white
-  '#4fc3f7', // 3 - blue
-  '#4fc3f7', // 4 - blue
-  '#e53935', // 5 - red
-  '#e53935', // 6 - red
-  '#ffd600', // 7 - gold
-  '#ffd600', // 8 - gold
+  '#000000', // 3 - black
+  '#000000', // 4 - black
+  '#4fc3f7', // 5 - blue
+  '#4fc3f7', // 6 - blue
+  '#e53935', // 7 - red
+  '#e53935', // 8 - red
   '#ffd600', // 9 - gold
   '#ffd600', // 10 - gold (bullseye)
 ];
 
 function ringPath(cx: number, cy: number, r1: number, r2: number): string {
   const arc = (r: number) =>
-    `M ${cx + r} ${cy} A ${r} ${r} 0 1 0 ${cx + r - 0.001} ${cy} Z`;
+    `M ${cx + r} ${cy} A ${r} ${r} 0 1 0 ${cx - r} ${cy} A ${r} ${r} 0 1 0 ${cx + r} ${cy} Z`;
   return `${arc(r1)} ${arc(r2)}`;
 }
 
@@ -33,7 +33,7 @@ export function ArcheryTarget({ onScore, disabled }: ArcheryTargetProps) {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, disabled && styles.disabled]}>
       <Svg viewBox="0 0 100 100" style={styles.svg}>
         {/* Background colored rings (outermost first) */}
         {RINGS.map((ring, i) =>
@@ -77,14 +77,21 @@ export function ArcheryTarget({ onScore, disabled }: ArcheryTargetProps) {
           const fs = ring.val >= 9 ? 3.2 : ring.val >= 7 ? 3.8 : 4.2;
 
           return (
-            <G key={`zone-${i}`} onPress={() => handlePress(ring.val)}>
+            <G key={`zone-${i}`}>
               {ring.inner === 0 ? (
-                <Circle cx="50" cy="50" r={ring.outer} fill="transparent" />
+                <Circle
+                  cx="50"
+                  cy="50"
+                  r={ring.outer}
+                  fill="transparent"
+                  onPress={() => handlePress(ring.val)}
+                />
               ) : (
                 <Path
                   d={ringPath(50, 50, ring.outer, ring.inner)}
                   fill="transparent"
                   fillRule="evenodd"
+                  onPress={() => handlePress(ring.val)}
                 />
               )}
               <SvgText
@@ -96,6 +103,7 @@ export function ArcheryTarget({ onScore, disabled }: ArcheryTargetProps) {
                 fontSize={fs}
                 fontFamily="Bebas Neue, sans-serif"
                 fontWeight="700"
+                pointerEvents="none"
               >
                 {ring.val}
               </SvgText>
@@ -108,6 +116,7 @@ export function ArcheryTarget({ onScore, disabled }: ArcheryTargetProps) {
                 fontSize={fs}
                 fontFamily="Bebas Neue, sans-serif"
                 fontWeight="700"
+                pointerEvents="none"
               >
                 {ring.val}
               </SvgText>
@@ -116,21 +125,28 @@ export function ArcheryTarget({ onScore, disabled }: ArcheryTargetProps) {
         })}
 
         {/* Miss button */}
-        <G onPress={() => handlePress(0)}>
-          <Circle cx="50" cy="91" r="4.5" fill="rgba(0,0,0,0.6)" stroke="rgba(255,255,255,0.6)" strokeWidth="0.5" />
-          <SvgText
-            x="50"
-            y="91.4"
-            textAnchor="middle"
-            alignmentBaseline="middle"
-            fill="white"
-            fontSize="3.5"
-            fontFamily="Bebas Neue, sans-serif"
-            fontWeight="700"
-          >
-            M
-          </SvgText>
-        </G>
+        <Circle
+          cx="50"
+          cy="91"
+          r="4.5"
+          fill="rgba(0,0,0,0.6)"
+          stroke="rgba(255,255,255,0.6)"
+          strokeWidth="0.5"
+          onPress={() => handlePress(0)}
+        />
+        <SvgText
+          x="50"
+          y="91.4"
+          textAnchor="middle"
+          alignmentBaseline="middle"
+          fill="white"
+          fontSize="3.5"
+          fontFamily="Bebas Neue, sans-serif"
+          fontWeight="700"
+          pointerEvents="none"
+        >
+          M
+        </SvgText>
       </Svg>
     </View>
   );
@@ -141,6 +157,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 10,
+  },
+  disabled: {
+    opacity: 0.4,
   },
   svg: {
     width: '85%',

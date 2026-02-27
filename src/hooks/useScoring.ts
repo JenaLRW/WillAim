@@ -23,13 +23,15 @@ function scoringReducer(state: ScoringState, action: ScoringAction): ScoringStat
     case 'INIT':
       return getInitialState(action.players);
 
-    case 'SWITCH_PLAYER':
+    case 'SWITCH_PLAYER': {
+      if (action.index < 0 || action.index >= state.players.length) return state;
       return { ...state, activePlayerIdx: action.index };
+    }
 
     case 'ADD_SCORE': {
       const players = state.players.map((p, i) => {
         if (i !== state.activePlayerIdx) return p;
-        const ps = { ...p.state };
+        const ps = p.state;
         if (ps.done) return p;
 
         const dist = ps.phase;
@@ -72,28 +74,42 @@ function scoringReducer(state: ScoringState, action: ScoringAction): ScoringStat
     }
 
     case 'CONFIRM_NO': {
+      const dist = state.pendingConfirmDist!;
       const players = state.players.map((p, i) => {
         if (i !== state.activePlayerIdx) return p;
-        const ps = { ...p.state };
-        const dist = state.pendingConfirmDist!;
-        const newScores = { ...ps.scores };
+        const ps = p.state;
+        const distScores = ps.scores[dist];
 
         // Walk backward to find and remove the last entered shot
-        let found = false;
-        for (let r = ROUNDS - 1; r >= 0 && !found; r--) {
-          for (let s = SHOTS - 1; s >= 0 && !found; s--) {
-            if (newScores[dist][r][s] !== null) {
-              newScores[dist] = newScores[dist].map((row, ri) =>
+        let undoRound = ps.round;
+        let undoShot = ps.shot;
+        let newDistScores = distScores;
+
+        for (let r = ROUNDS - 1; r >= 0; r--) {
+          let found = false;
+          for (let s = SHOTS - 1; s >= 0; s--) {
+            if (distScores[r][s] !== null) {
+              newDistScores = distScores.map((row, ri) =>
                 ri === r ? row.map((val, si) => (si === s ? null : val)) : row,
               );
-              ps.round = r;
-              ps.shot = s;
+              undoRound = r;
+              undoShot = s;
               found = true;
+              break;
             }
           }
+          if (found) break;
         }
 
-        return { ...p, state: { ...ps, scores: newScores } };
+        return {
+          ...p,
+          state: {
+            ...ps,
+            scores: { ...ps.scores, [dist]: newDistScores },
+            round: undoRound,
+            shot: undoShot,
+          },
+        };
       });
 
       return {
@@ -162,11 +178,24 @@ function scoringReducer(state: ScoringState, action: ScoringAction): ScoringStat
 
     case 'CLOSE_REWARD': {
       const allDone = state.players.every((p) => p.state.done);
+
+      // Auto-advance to next unfinished player
+      let nextIdx = state.activePlayerIdx;
+      if (!allDone) {
+        const nextUnfinished = state.players.findIndex(
+          (p, i) => i !== state.activePlayerIdx && !p.state.done,
+        );
+        if (nextUnfinished !== -1) {
+          nextIdx = nextUnfinished;
+        }
+      }
+
       return {
         ...state,
         showReward: false,
         rewardPlayer: null,
         allDone,
+        activePlayerIdx: nextIdx,
       };
     }
 
@@ -176,6 +205,6 @@ function scoringReducer(state: ScoringState, action: ScoringAction): ScoringStat
 }
 
 export function useScoring(initialPlayers: ScoringPlayer[]) {
-  const [state, dispatch] = useReducer(scoringReducer, getInitialState(initialPlayers));
+  const [state, dispatch] = useReducer(scoringReducer, initialPlayers, getInitialState);
   return { state, dispatch };
 }

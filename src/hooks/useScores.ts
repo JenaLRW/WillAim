@@ -7,10 +7,14 @@ export function useScores() {
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
-    setLoading(true);
-    const data = await scoreStore.getAllScores();
-    setScores(data);
-    setLoading(false);
+    try {
+      const data = await scoreStore.getAllScores();
+      setScores(data);
+    } catch {
+      // storage read failed — keep existing data
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
