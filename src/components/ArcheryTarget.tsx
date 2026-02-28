@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import Svg, { Circle, Path, G, Text as SvgText } from 'react-native-svg';
+import Svg, { Path, G, Text as SvgText } from 'react-native-svg';
 import { RINGS } from '../constants/scoring';
 
 interface ArcheryTargetProps {
@@ -21,10 +21,41 @@ const RING_COLORS = [
   '#ffd600', // 10 - gold (bullseye)
 ];
 
-function ringPath(cx: number, cy: number, r1: number, r2: number): string {
-  const arc = (r: number) =>
-    `M ${cx + r} ${cy} A ${r} ${r} 0 1 0 ${cx - r} ${cy} A ${r} ${r} 0 1 0 ${cx + r} ${cy} Z`;
-  return `${arc(r1)} ${arc(r2)}`;
+// Quarter-circle origin at bottom-right corner of the viewBox
+const CX = 100;
+const CY = 100;
+// Scale so outermost ring (radius 57) maps to full viewBox width (100)
+const S = 100 / 57;
+
+function scaled(r: number): number {
+  return r * S;
+}
+
+function quarterArc(r: number): string {
+  const sr = scaled(r);
+  return `M ${CX} ${CY - sr} A ${sr} ${sr} 0 0 0 ${CX - sr} ${CY}`;
+}
+
+function quarterRingPath(r1: number, r2: number): string {
+  const sr1 = scaled(r1);
+  const sr2 = scaled(r2);
+  return [
+    `M ${CX} ${CY - sr1}`,
+    `A ${sr1} ${sr1} 0 0 0 ${CX - sr1} ${CY}`,
+    `L ${CX - sr2} ${CY}`,
+    `A ${sr2} ${sr2} 0 0 1 ${CX} ${CY - sr2}`,
+    'Z',
+  ].join(' ');
+}
+
+function quarterCirclePath(r: number): string {
+  const sr = scaled(r);
+  return [
+    `M ${CX} ${CY}`,
+    `L ${CX} ${CY - sr}`,
+    `A ${sr} ${sr} 0 0 0 ${CX - sr} ${CY}`,
+    'Z',
+  ].join(' ');
 }
 
 export function ArcheryTarget({ onScore, disabled }: ArcheryTargetProps) {
@@ -36,32 +67,19 @@ export function ArcheryTarget({ onScore, disabled }: ArcheryTargetProps) {
     <View style={[styles.container, disabled && styles.disabled]}>
       <Svg viewBox="0 0 100 100" style={styles.svg}>
         {/* Background colored rings (outermost first) */}
-        {RINGS.map((ring, i) =>
-          ring.inner === 0 ? (
-            <Circle
-              key={`bg-${i}`}
-              cx="50"
-              cy="50"
-              r={ring.outer}
-              fill={RING_COLORS[i]}
-            />
-          ) : (
-            <Path
-              key={`bg-${i}`}
-              d={ringPath(50, 50, ring.outer, ring.inner)}
-              fill={RING_COLORS[i]}
-              fillRule="evenodd"
-            />
-          ),
-        )}
+        {RINGS.map((ring, i) => (
+          <Path
+            key={`bg-${i}`}
+            d={ring.inner === 0 ? quarterCirclePath(ring.outer) : quarterRingPath(ring.outer, ring.inner)}
+            fill={RING_COLORS[i]}
+          />
+        ))}
 
         {/* Ring borders */}
         {RINGS.map((ring, i) => (
-          <Circle
+          <Path
             key={`border-${i}`}
-            cx="50"
-            cy="50"
-            r={ring.outer}
+            d={quarterArc(ring.outer)}
             fill="none"
             stroke="rgba(0,0,0,0.25)"
             strokeWidth="0.3"
@@ -72,31 +90,20 @@ export function ArcheryTarget({ onScore, disabled }: ArcheryTargetProps) {
         {RINGS.map((ring, i) => {
           const ang = -45 * (Math.PI / 180);
           const mr = ring.inner === 0 ? ring.outer / 2 : (ring.inner + ring.outer) / 2;
-          const lx = 50 + mr * Math.cos(ang);
-          const ly = 50 + mr * Math.sin(ang);
-          const fs = ring.val >= 9 ? 3.2 : ring.val >= 7 ? 3.8 : 4.2;
+          const lx = CX + scaled(mr) * Math.cos(ang);
+          const ly = CY + scaled(mr) * Math.sin(ang);
+          const fs = ring.val >= 9 ? 4.5 : ring.val >= 7 ? 5.5 : 6;
 
           return (
             <G key={`zone-${i}`}>
-              {ring.inner === 0 ? (
-                <Circle
-                  cx="50"
-                  cy="50"
-                  r={ring.outer}
-                  fill="transparent"
-                  onPress={() => handlePress(ring.val)}
-                />
-              ) : (
-                <Path
-                  d={ringPath(50, 50, ring.outer, ring.inner)}
-                  fill="transparent"
-                  fillRule="evenodd"
-                  onPress={() => handlePress(ring.val)}
-                />
-              )}
+              <Path
+                d={ring.inner === 0 ? quarterCirclePath(ring.outer) : quarterRingPath(ring.outer, ring.inner)}
+                fill="transparent"
+                onPress={() => handlePress(ring.val)}
+              />
               <SvgText
-                x={lx + 0.25}
-                y={ly + 0.35}
+                x={lx + 0.3}
+                y={ly + 0.4}
                 textAnchor="middle"
                 alignmentBaseline="middle"
                 fill="rgba(0,0,0,0.7)"
@@ -124,23 +131,21 @@ export function ArcheryTarget({ onScore, disabled }: ArcheryTargetProps) {
           );
         })}
 
-        {/* Miss button */}
-        <Circle
-          cx="50"
-          cy="91"
-          r="4.5"
+        {/* Miss button — bottom-left corner */}
+        <Path
+          d="M 4 96 L 4 86 A 10 10 0 0 1 14 96 Z"
           fill="rgba(0,0,0,0.6)"
           stroke="rgba(255,255,255,0.6)"
           strokeWidth="0.5"
           onPress={() => handlePress(0)}
         />
         <SvgText
-          x="50"
-          y="91.4"
+          x="7.5"
+          y="93"
           textAnchor="middle"
           alignmentBaseline="middle"
           fill="white"
-          fontSize="3.5"
+          fontSize="5"
           fontFamily="Bebas Neue, sans-serif"
           fontWeight="700"
           pointerEvents="none"
