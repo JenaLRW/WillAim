@@ -9,7 +9,7 @@ Built with React Native and Expo. Runs on iOS and Android via [Expo Go](https://
 ## Features
 
 ### Player Management
-- Create player profiles with name, grade (3rd–12th + Adult), and avatar
+- Create player profiles with name, grade (4th-12th), and avatar
 - View player statistics: best score, average, total tournaments
 - Browse full score history per player
 - Delete individual scores from history
