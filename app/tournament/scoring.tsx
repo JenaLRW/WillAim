@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, ScrollView, StyleSheet, Alert } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Alert, Pressable } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, FONTS } from '../../src/constants/theme';
@@ -24,6 +24,13 @@ export default function ScoringScreen() {
   const [initialized, setInitialized] = useState(false);
   const { state, dispatch } = useScoring([]);
   const hasNavigated = useRef(false);
+  const [viewDist, setViewDist] = useState<'10m' | '15m'>('10m');
+
+  // Auto-switch viewDist when the active player's scoring phase changes
+  const activePhase = state.players[state.activePlayerIdx]?.state?.phase;
+  useEffect(() => {
+    if (activePhase) setViewDist(activePhase);
+  }, [activePhase]);
 
   useEffect(() => {
     (async () => {
@@ -113,6 +120,13 @@ export default function ScoringScreen() {
   const t10 = flatSum(ps.scores['10m']);
   const t15 = flatSum(ps.scores['15m']);
 
+  // Is the user viewing the currently active scoring phase?
+  const isViewingActive = viewDist === ps.phase;
+  // Can user interact with the 15m tab?
+  const can15m = ps.confirmed10;
+  // Can user interact with the 10m tab? (only during 15m phase to review)
+  const canSwitch10m = ps.phase === '15m';
+
   const confirmTitle =
     state.pendingConfirmDist === '10m'
       ? 'CONFIRM 10 METER'
@@ -136,63 +150,82 @@ export default function ScoringScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <TopBar title="SCORING" onBack={handleExit} />
+      <TopBar
+        title="SCORING"
+        onBack={handleExit}
+        rightLabel={`${activePlayer.avatar} ${activePlayer.name.split(' ')[0]}`}
+      />
 
-      {/* Player tabs */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabBar} contentContainerStyle={styles.tabContent}>
-        {state.players.map((p, i) => (
-          <PlayerTab
-            key={p.id}
-            avatar={p.avatar}
-            name={p.name}
-            isActive={i === state.activePlayerIdx}
-            isDone={p.state.done}
-            onPress={() => dispatch({ type: 'SWITCH_PLAYER', index: i })}
-          />
-        ))}
-      </ScrollView>
+      {/* Player tabs — only shown for multi-player */}
+      {state.players.length > 1 && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabBar} contentContainerStyle={styles.tabContent}>
+          {state.players.map((p, i) => (
+            <PlayerTab
+              key={p.id}
+              avatar={p.avatar}
+              name={p.name}
+              isActive={i === state.activePlayerIdx}
+              isDone={p.state.done}
+              onPress={() => dispatch({ type: 'SWITCH_PLAYER', index: i })}
+            />
+          ))}
+        </ScrollView>
+      )}
 
       <ScrollView style={styles.body} contentContainerStyle={styles.bodyContent}>
         <GrandTotal score={grand} />
 
-        {/* Show only the active distance block */}
-        {ps.phase === '10m' && !ps.confirmed10 ? (
-          <View style={styles.distBlock}>
-            <View style={styles.distHeader}>
-              <Text style={styles.distTitle}>⬤ 10 METERS</Text>
-              <Text style={styles.distTotal}>
-                {t10 > 0 ? t10 : '—'}
-              </Text>
-            </View>
-            <ScoreGrid
-              scores={ps.scores['10m']}
-              currentRound={ps.round}
-              currentShot={ps.shot}
-              isActive
-              isConfirmed={false}
-            />
+        {/* Distance tabs */}
+        <View style={styles.distTabs}>
+          <Pressable
+            onPress={canSwitch10m ? () => setViewDist('10m') : undefined}
+            style={styles.distTab}
+          >
+            <Text style={[
+              styles.distTitle,
+              viewDist === '10m' && styles.distTitleActive,
+              viewDist !== '10m' && styles.distTitleDimmed,
+            ]}>
+              ⬤ 10 METERS
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={can15m ? () => setViewDist('15m') : undefined}
+            style={styles.distTab}
+          >
+            <Text style={[
+              styles.distTitle,
+              viewDist === '15m' && styles.distTitleActive,
+              viewDist !== '15m' && styles.distTitleDimmed,
+            ]}>
+              ◎ 15 METERS
+            </Text>
+          </Pressable>
+        </View>
+
+        {/* Score grid for viewed distance */}
+        <View style={styles.distBlock}>
+          <View style={styles.distHeader}>
+            <View />
+            <Text style={styles.distTotal}>
+              {viewDist === '10m'
+                ? (t10 > 0 ? t10 : '—')
+                : (ps.confirmed15 ? t15 : t15 > 0 ? t15 : '—')}
+            </Text>
           </View>
-        ) : (
-          <View style={styles.distBlock}>
-            <View style={styles.distHeader}>
-              <Text style={styles.distTitle}>◎ 15 METERS</Text>
-              <Text style={styles.distTotal}>
-                {ps.confirmed15 ? t15 : t15 > 0 ? t15 : '—'}
-              </Text>
-            </View>
-            <ScoreGrid
-              scores={ps.scores['15m']}
-              currentRound={ps.phase === '15m' ? ps.round : -1}
-              currentShot={ps.phase === '15m' ? ps.shot : -1}
-              isActive={ps.phase === '15m'}
-              isConfirmed={ps.confirmed15}
-            />
-          </View>
-        )}
+          <ScoreGrid
+            scores={ps.scores[viewDist]}
+            currentRound={isViewingActive ? ps.round : -1}
+            currentShot={isViewingActive ? ps.shot : -1}
+            isActive={isViewingActive}
+            isConfirmed={viewDist === '10m' ? ps.confirmed10 : ps.confirmed15}
+            onCellPress={isViewingActive ? (r, s) => dispatch({ type: 'JUMP_TO', round: r, shot: s }) : undefined}
+          />
+        </View>
 
         <ArcheryTarget
           onScore={(val) => dispatch({ type: 'ADD_SCORE', value: val })}
-          disabled={ps.done}
+          disabled={ps.done || !isViewingActive}
         />
       </ScrollView>
 
@@ -238,6 +271,21 @@ const styles = StyleSheet.create({
   bodyContent: {
     paddingHorizontal: 16,
     paddingBottom: 40,
+  },
+  distTabs: {
+    flexDirection: 'row',
+    gap: 20,
+    marginBottom: 8,
+  },
+  distTab: {
+    paddingVertical: 4,
+  },
+  distTitleActive: {
+    color: COLORS.text,
+  },
+  distTitleDimmed: {
+    color: COLORS.muted,
+    opacity: 0.4,
   },
   distBlock: {
     marginBottom: 16,

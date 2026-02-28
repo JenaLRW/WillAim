@@ -28,6 +28,19 @@ function scoringReducer(state: ScoringState, action: ScoringAction): ScoringStat
       return { ...state, activePlayerIdx: action.index };
     }
 
+    case 'JUMP_TO': {
+      const players = state.players.map((p, i) => {
+        if (i !== state.activePlayerIdx) return p;
+        const ps = p.state;
+        if (ps.done) return p;
+        return {
+          ...p,
+          state: { ...ps, round: action.round, shot: action.shot },
+        };
+      });
+      return { ...state, players };
+    }
+
     case 'ADD_SCORE': {
       const players = state.players.map((p, i) => {
         if (i !== state.activePlayerIdx) return p;
@@ -44,13 +57,31 @@ function scoringReducer(state: ScoringState, action: ScoringAction): ScoringStat
           ),
         };
 
-        let newRound = ps.round;
-        let newShot = ps.shot + 1;
+        // Find next empty cell (search forward from current, then wrap around)
+        const distScores = newScores[dist];
+        let newRound = -1;
+        let newShot = -1;
+        let startR = ps.round;
+        let startS = ps.shot + 1;
+        if (startS >= SHOTS) { startS = 0; startR++; }
 
-        if (newShot >= SHOTS) {
-          newShot = 0;
-          newRound = ps.round + 1;
+        // Search from after current position to end
+        for (let r = startR; r < ROUNDS && newRound === -1; r++) {
+          for (let s = r === startR ? startS : 0; s < SHOTS; s++) {
+            if (distScores[r][s] === null) { newRound = r; newShot = s; break; }
+          }
         }
+        // Wrap: search from beginning to current position
+        if (newRound === -1) {
+          for (let r = 0; r <= ps.round && newRound === -1; r++) {
+            const end = r === ps.round ? ps.shot : SHOTS;
+            for (let s = 0; s < end; s++) {
+              if (distScores[r][s] === null) { newRound = r; newShot = s; break; }
+            }
+          }
+        }
+        // All cells filled — advance past last round to trigger confirm
+        if (newRound === -1) { newRound = ROUNDS; newShot = 0; }
 
         return {
           ...p,

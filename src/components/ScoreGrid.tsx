@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Animated, Easing } from 'react-native';
 import { COLORS, FONTS, RADII } from '../constants/theme';
 import { ROUNDS, SHOTS } from '../constants/scoring';
 
@@ -9,6 +9,7 @@ interface ScoreGridProps {
   currentShot: number;
   isActive: boolean;
   isConfirmed: boolean;
+  onCellPress?: (round: number, shot: number) => void;
 }
 
 function PulsingBox({ children }: { children: React.ReactNode }) {
@@ -37,7 +38,7 @@ function PulsingBox({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function ScoreGrid({ scores, currentRound, currentShot, isActive, isConfirmed }: ScoreGridProps) {
+export function ScoreGrid({ scores, currentRound, currentShot, isActive, isConfirmed, onCellPress }: ScoreGridProps) {
   return (
     <View style={[styles.container, !isActive && styles.inactive]}>
       {Array.from({ length: ROUNDS }, (_, r) => {
@@ -65,6 +66,18 @@ export function ScoreGrid({ scores, currentRound, currentShot, isActive, isConfi
                 );
               }
 
+              if (isFilled && isActive && !isConfirmed && onCellPress) {
+                return (
+                  <Pressable key={s} onPress={() => onCellPress(r, s)}>
+                    <View style={[styles.box, styles.filledBox]}>
+                      <Text style={[styles.boxText, styles.filledText]}>
+                        {val === 0 ? 'M' : val}
+                      </Text>
+                    </View>
+                  </Pressable>
+                );
+              }
+
               return (
                 <View key={s} style={[styles.box, isFilled && styles.filledBox]}>
                   <Text style={[styles.boxText, isFilled && styles.filledText]}>
@@ -73,7 +86,7 @@ export function ScoreGrid({ scores, currentRound, currentShot, isActive, isConfi
                 </View>
               );
             })}
-            <View style={[styles.box, styles.totalBox, rowFilled === SHOTS && styles.filledTotal]}>
+            <View style={[styles.box, styles.totalBox, rowFilled === SHOTS && styles.filledTotal, { marginLeft: 50 }]}>
               <Text style={[styles.totalText, rowFilled === SHOTS && styles.filledTotalText]}>
                 {rowFilled === SHOTS ? rowSum : ''}
               </Text>

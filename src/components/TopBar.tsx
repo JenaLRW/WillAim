@@ -6,9 +6,10 @@ interface TopBarProps {
   title: string;
   onBack?: () => void;
   rightAction?: { label: string; onPress: () => void };
+  rightLabel?: string;
 }
 
-export function TopBar({ title, onBack, rightAction }: TopBarProps) {
+export function TopBar({ title, onBack, rightAction, rightLabel }: TopBarProps) {
   return (
     <View style={styles.container}>
       {onBack ? (
@@ -28,6 +29,8 @@ export function TopBar({ title, onBack, rightAction }: TopBarProps) {
         >
           <Text style={styles.actionText}>{rightAction.label}</Text>
         </Pressable>
+      ) : rightLabel ? (
+        <Text style={styles.rightLabel}>{rightLabel}</Text>
       ) : (
         <View style={{ width: 12 }} />
       )}
@@ -81,5 +84,10 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bodySemiBold,
     fontSize: 13,
     color: '#000',
+  },
+  rightLabel: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 14,
+    color: COLORS.muted,
   },
 });

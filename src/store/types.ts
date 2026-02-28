@@ -41,6 +41,7 @@ export type ScoringAction =
   | { type: 'INIT'; players: ScoringPlayer[] }
   | { type: 'ADD_SCORE'; value: number }
   | { type: 'SWITCH_PLAYER'; index: number }
+  | { type: 'JUMP_TO'; round: number; shot: number }
   | { type: 'CONFIRM_YES' }
   | { type: 'CONFIRM_NO' }
   | { type: 'CLOSE_REWARD' };
