@@ -7,9 +7,10 @@ interface TopBarProps {
   onBack?: () => void;
   rightAction?: { label: string; onPress: () => void };
   rightLabel?: string;
+  rightExtra?: React.ReactNode;
 }
 
-export function TopBar({ title, onBack, rightAction, rightLabel }: TopBarProps) {
+export function TopBar({ title, onBack, rightAction, rightLabel, rightExtra }: TopBarProps) {
   return (
     <View style={styles.container}>
       {onBack ? (
@@ -22,6 +23,7 @@ export function TopBar({ title, onBack, rightAction, rightLabel }: TopBarProps) 
       <Text style={styles.title} numberOfLines={1}>
         {title}
       </Text>
+      {rightExtra}
       {rightAction ? (
         <Pressable
           onPress={rightAction.onPress}

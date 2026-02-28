@@ -26,6 +26,15 @@ export async function addPlayer(data: { name: string; grade: string; avatar: str
   return player;
 }
 
+export async function updatePlayer(id: string, data: Partial<Omit<Player, 'id' | 'joined'>>): Promise<Player | undefined> {
+  const players = await getAllPlayers();
+  const idx = players.findIndex((p) => p.id === id);
+  if (idx === -1) return undefined;
+  players[idx] = { ...players[idx], ...data };
+  await setItem(KEY, players);
+  return players[idx];
+}
+
 export async function deletePlayer(id: string): Promise<void> {
   const players = await getAllPlayers();
   await setItem(KEY, players.filter((p) => p.id !== id));

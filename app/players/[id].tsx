@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, FlatList, StyleSheet } from 'react-native';
+import { View, Text, Pressable, FlatList, StyleSheet } from 'react-native';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, FONTS, RADII } from '../../src/constants/theme';
@@ -9,6 +9,7 @@ import { StatCard } from '../../src/components/StatCard';
 import { HistoryCard } from '../../src/components/HistoryCard';
 import { EmptyState } from '../../src/components/EmptyState';
 import { DeleteModal } from '../../src/components/DeleteModal';
+import { SettingsModal } from '../../src/components/SettingsModal';
 import { useToast } from '../../src/components/Toast';
 import { formatDate } from '../../src/utils/formatDate';
 import { Player, Score } from '../../src/store/types';
@@ -22,6 +23,7 @@ export default function PlayerProfileScreen() {
   const [player, setPlayer] = useState<Player | null>(null);
   const [scores, setScores] = useState<Score[]>([]);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -50,6 +52,15 @@ export default function PlayerProfileScreen() {
     }
   };
 
+  const handleSaveAvatar = async (avatar: string) => {
+    const updated = await playerStore.updatePlayer(id!, { avatar });
+    if (updated) {
+      setPlayer(updated);
+      showToast('Avatar updated');
+    }
+    setShowSettings(false);
+  };
+
   const handleShoot = () => {
     router.push({
       pathname: '/tournament/scoring',
@@ -64,6 +75,14 @@ export default function PlayerProfileScreen() {
       <TopBar
         title={player.name.split(' ')[0].toUpperCase()}
         onBack={() => router.back()}
+        rightExtra={
+          <Pressable
+            onPress={() => setShowSettings(true)}
+            style={({ pressed }) => [styles.settingsBtn, pressed && styles.settingsPressed]}
+          >
+            <Text style={styles.settingsIcon}>⚙️</Text>
+          </Pressable>
+        }
         rightAction={{ label: 'SHOOT', onPress: handleShoot }}
       />
       <FlatList
@@ -99,6 +118,12 @@ export default function PlayerProfileScreen() {
         visible={deleteId !== null}
         onDelete={handleDelete}
         onCancel={() => setDeleteId(null)}
+      />
+      <SettingsModal
+        visible={showSettings}
+        currentAvatar={player.avatar}
+        onSave={handleSaveAvatar}
+        onClose={() => setShowSettings(false)}
       />
     </SafeAreaView>
   );
@@ -146,5 +171,22 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
     marginTop: 8,
     marginBottom: 8,
+  },
+  settingsBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: RADII.round,
+    backgroundColor: COLORS.surface2,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  settingsPressed: {
+    transform: [{ scale: 0.95 }],
+    opacity: 0.8,
+  },
+  settingsIcon: {
+    fontSize: 18,
   },
 });
