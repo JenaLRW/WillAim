@@ -155,39 +155,40 @@ export default function ScoringScreen() {
       <ScrollView style={styles.body} contentContainerStyle={styles.bodyContent}>
         <GrandTotal score={grand} />
 
-        {/* 10m block */}
-        <View style={[styles.distBlock, ps.phase === '15m' && styles.inactiveBlock]}>
-          <View style={styles.distHeader}>
-            <Text style={styles.distTitle}>⬤ 10 METERS</Text>
-            <Text style={styles.distTotal}>
-              {ps.confirmed10 ? t10 : t10 > 0 ? t10 : '—'}
-            </Text>
+        {/* Show only the active distance block */}
+        {ps.phase === '10m' && !ps.confirmed10 ? (
+          <View style={styles.distBlock}>
+            <View style={styles.distHeader}>
+              <Text style={styles.distTitle}>⬤ 10 METERS</Text>
+              <Text style={styles.distTotal}>
+                {t10 > 0 ? t10 : '—'}
+              </Text>
+            </View>
+            <ScoreGrid
+              scores={ps.scores['10m']}
+              currentRound={ps.round}
+              currentShot={ps.shot}
+              isActive
+              isConfirmed={false}
+            />
           </View>
-          <ScoreGrid
-            scores={ps.scores['10m']}
-            currentRound={ps.phase === '10m' ? ps.round : -1}
-            currentShot={ps.phase === '10m' ? ps.shot : -1}
-            isActive={ps.phase === '10m'}
-            isConfirmed={ps.confirmed10}
-          />
-        </View>
-
-        {/* 15m block */}
-        <View style={[styles.distBlock, ps.phase === '10m' && styles.inactiveBlock]}>
-          <View style={styles.distHeader}>
-            <Text style={styles.distTitle}>◎ 15 METERS</Text>
-            <Text style={styles.distTotal}>
-              {ps.confirmed15 ? t15 : t15 > 0 ? t15 : '—'}
-            </Text>
+        ) : (
+          <View style={styles.distBlock}>
+            <View style={styles.distHeader}>
+              <Text style={styles.distTitle}>◎ 15 METERS</Text>
+              <Text style={styles.distTotal}>
+                {ps.confirmed15 ? t15 : t15 > 0 ? t15 : '—'}
+              </Text>
+            </View>
+            <ScoreGrid
+              scores={ps.scores['15m']}
+              currentRound={ps.phase === '15m' ? ps.round : -1}
+              currentShot={ps.phase === '15m' ? ps.shot : -1}
+              isActive={ps.phase === '15m'}
+              isConfirmed={ps.confirmed15}
+            />
           </View>
-          <ScoreGrid
-            scores={ps.scores['15m']}
-            currentRound={ps.phase === '15m' ? ps.round : -1}
-            currentShot={ps.phase === '15m' ? ps.shot : -1}
-            isActive={ps.phase === '15m'}
-            isConfirmed={ps.confirmed15}
-          />
-        </View>
+        )}
 
         <ArcheryTarget
           onScore={(val) => dispatch({ type: 'ADD_SCORE', value: val })}
@@ -240,9 +241,6 @@ const styles = StyleSheet.create({
   },
   distBlock: {
     marginBottom: 16,
-  },
-  inactiveBlock: {
-    opacity: 0.4,
   },
   distHeader: {
     flexDirection: 'row',
